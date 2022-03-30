@@ -9,37 +9,37 @@ describe('BBD Test', () => {
     describe('constructor', () => {
         it('should instantiate with Aggregate subclass', () => {
             // given
-            class mockAggregate extends Aggregate { }
+            class mockAggregate extends Aggregate { };
 
             // when
             let bddTest = new BDDTest(mockAggregate);
 
             //then
-            expect(bddTest).not.toBeNull()
-        })
+            expect(bddTest).not.toBeNull();
+        });
 
         it('should throw OnlyTestWithAggregate exception with non-Aggregate subclass', () => {
             // given
-            class mockClass { }
+            class mockClass { };
 
             // when
-            let testWithNonAggregate = () => new BDDTest(mockClass)
+            let testWithNonAggregate = () => new BDDTest(mockClass);
 
             // then
             expect(testWithNonAggregate).toThrow(OnlyTestWithAggregate);
-        })
+        });
     })
 
     describe('Given', () => {
-        class mockAggregate extends Aggregate { }
+        class mockAggregate extends Aggregate { };
         let bddTest: BDDTest<mockAggregate>;
         beforeEach(() => {
             bddTest = new BDDTest(mockAggregate);
-        })
+        });
 
         it('should return array of provided Event subclass', () => {
             // given
-            class mockEvent extends Event { }
+            class mockEvent extends Event { };
             let mockEvent1 = new mockEvent();
             let mockEvent2 = new mockEvent();
 
@@ -48,29 +48,29 @@ describe('BBD Test', () => {
 
             // then
             expect(givenEvents).toEqual([mockEvent1, mockEvent2]);
-        })
+        });
 
         it('should throw OnlyPrepositionWithEvents with non-Event subclass', () => {
             // given
-            class mockClass { }
-            class mockEvent extends Event { }
+            class mockClass { };
+            class mockEvent extends Event { };
             let mockEvent1 = new mockEvent();
             let mockClass1 = new mockClass();
 
             // when
-            let prepositionWithNonEvent = () => bddTest.Given(mockEvent1, mockClass1)
+            let prepositionWithNonEvent = () => bddTest.Given(mockEvent1, mockClass1);
 
             // then
             expect(prepositionWithNonEvent).toThrow(OnlyPrepositionWithEvents);
-        })
+        });
     })
 
     describe('When', () => {
-        class handledCommand extends Command { };
-        class superCommand extends Command { };
+        class HandledCommand extends Command { };
         class stubEvent extends Event { test = "Test" };
-        class mockAggregate extends Aggregate implements IHandleCommand<handledCommand>, IHandleCommand<superCommand> {
-            *Handle(c: handledCommand): Generator<Event, void, unknown> { yield new stubEvent() }
+        class mockAggregate extends Aggregate {
+            override commands : Command[] = [HandledCommand];
+            handleHandledCommand(c: HandledCommand) {}
         };
         let bddTest: BDDTest<mockAggregate>;
         beforeEach(() => {
@@ -79,7 +79,7 @@ describe('BBD Test', () => {
 
         it('should return command handler for Command subclass', () => {
             // given
-            let command = new handledCommand();
+            let command = new HandledCommand();
             let event = new stubEvent();
 
             // when
@@ -91,11 +91,11 @@ describe('BBD Test', () => {
 
         it('should throw OnlyActionWithCommands with non-Command subclass', () => {
             // given
-            class mockClass { }
+            class mockClass { };
             let mClass = new mockClass();
 
             // when
-            let actionWithNonCommand = () => bddTest.When(mClass)
+            let actionWithNonCommand = () => bddTest.When(mClass);
 
             // then
             expect(actionWithNonCommand).toThrow(OnlyActionWithCommands);
@@ -107,7 +107,7 @@ describe('BBD Test', () => {
             let unhandled = new unhandledCommand();
 
             // when
-            let actionWithNonCommand = () => bddTest.When(unhandled)
+            let actionWithNonCommand = () => bddTest.When(unhandled);
 
             // then
             expect(actionWithNonCommand()().next().value).toThrow(CommandHandlerNotDefined);

@@ -6,14 +6,14 @@ import IHandleCommand from "./i-handle-command";
 
 class BDDTest<TAggregate extends Aggregate> {
 
-    private sut: TAggregate;
+    private _aggregate : TAggregate;
 
     constructor(aggregate: new () => TAggregate) {
         let agg = new aggregate();
         if (!(agg instanceof Aggregate)) {
             throw new OnlyTestWithAggregate();
         }
-        this.sut = agg;
+        this._aggregate = agg;
     }
 
     Given(...events: Event[]): Event[] {
@@ -38,14 +38,10 @@ class BDDTest<TAggregate extends Aggregate> {
     }
 
     private dispatchCommand<TCommand>(command: TCommand): Generator<Event, void, unknown> {
-        let handler = (this.sut as unknown) as IHandleCommand<TCommand>;
-        if (handler == null) {
+        if (!this._aggregate.handles(command)) {
             throw new Error("FILL ME");
         }
-        type ArgumentTypes<F extends Function> = F extends (...args: infer A) => any ? A : never;
-        let TestArguments = handler.Handle.toString();
-        console.log(TestArguments);
-        return handler.Handle(command);
+        return this._aggregate.Handle(command);
     }
 }
 
