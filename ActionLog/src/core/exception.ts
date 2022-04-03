@@ -1,3 +1,5 @@
+import Command from "./command";
+
 export class OnlyTestWithAggregate extends Error {
   constructor() {
     super("Only test with Aggregate subclass");
@@ -26,8 +28,8 @@ export class OnlyActionWithCommands extends Error {
 }
 
 export class CommandHandlerNotDefined extends Error {
-  constructor() {
-    super("Only action with Command subclass");
+  constructor(command: Command) {
+    super(`Command handler not defined for ${command.name}`);
     // Set the prototype explicitly.
     Object.setPrototypeOf(this, CommandHandlerNotDefined.prototype);
     this.name = 'CommandHandlerNotDefined';

@@ -1,8 +1,7 @@
 import Aggregate from "./aggregate";
 import Command from "./command";
 import Event from "./event";
-import { OnlyTestWithAggregate, OnlyPrepositionWithEvents, OnlyActionWithCommands } from "./exception"
-import IHandleCommand from "./i-handle-command";
+import { OnlyTestWithAggregate, OnlyPrepositionWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined } from "./exception"
 
 class BDDTest<TAggregate extends Aggregate> {
 
@@ -27,21 +26,17 @@ class BDDTest<TAggregate extends Aggregate> {
         if (!(command instanceof Command)) {
             throw new OnlyActionWithCommands();
         }
+        if (!this._aggregate.handles(command)) {
+            throw new CommandHandlerNotDefined(command);
+        }
         let commandHandler = () => {
             try {
-                return this.dispatchCommand(command);
+                return this._aggregate.Handle(command);
             } catch (error: any) {
                 return error
             }
         }
         return commandHandler;
-    }
-
-    private dispatchCommand<TCommand>(command: TCommand): Generator<Event, void, unknown> {
-        if (!this._aggregate.handles(command)) {
-            throw new Error("FILL ME");
-        }
-        return this._aggregate.Handle(command);
     }
 }
 

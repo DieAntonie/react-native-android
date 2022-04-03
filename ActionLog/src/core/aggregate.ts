@@ -1,20 +1,20 @@
 import Command from "./command";
 import Event from "./event";
+import { CommandHandlerNotDefined } from "./exception";
+import IHandleCommand from "./i-handle-command";
 
-interface IAggregate {
-    commands : Command[];
-}
-class Aggregate implements IAggregate {
-    commands: Command[] = [];
+class Aggregate implements IHandleCommand {
+    handlers: Map<Command, Function> = new Map();
     *Handle<TCommand>(command: TCommand): Generator<Event, void, unknown> {
-        throw new Error("Method not implemented.");
+        let commandHandler = this.handlers.get(command.constructor);
+        if (!commandHandler) {
+            throw new CommandHandlerNotDefined(command.constructor);
+        }
+        return commandHandler(command)
     }
-    handles<TCommand>(command: TCommand) {
-        let handles = this.commands.some(
-            c => c.name === command.constructor.name &&
-            Reflect.has(this, `handle${command.constructor.name}`)
-        );
-        return handles;
+
+    handles<TCommand>(command: TCommand): boolean {
+        return this.handlers.has(command.constructor)
     }
 }
 export default Aggregate

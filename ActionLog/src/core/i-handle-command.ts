@@ -1,7 +1,6 @@
-import Event from "./event";
+import Command from "./command";
 
-interface IHandleCommand<TCommand>
-{
-    Handle(c: TCommand): Generator<Event, void, unknown>;
+interface IHandleCommand {
+    handlers: Map<Command, Function>
 }
 export default IHandleCommand

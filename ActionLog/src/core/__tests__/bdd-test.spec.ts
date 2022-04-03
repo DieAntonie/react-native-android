@@ -3,7 +3,6 @@ import Aggregate from '../aggregate'
 import Event from '../event'
 import Command from '../command'
 import { OnlyTestWithAggregate, OnlyPrepositionWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined } from "../exception"
-import IHandleCommand from '../i-handle-command'
 
 describe('BBD Test', () => {
     describe('constructor', () => {
@@ -28,7 +27,7 @@ describe('BBD Test', () => {
             // then
             expect(testWithNonAggregate).toThrow(OnlyTestWithAggregate);
         });
-    })
+    });
 
     describe('Given', () => {
         class mockAggregate extends Aggregate { };
@@ -63,14 +62,13 @@ describe('BBD Test', () => {
             // then
             expect(prepositionWithNonEvent).toThrow(OnlyPrepositionWithEvents);
         });
-    })
+    });
 
     describe('When', () => {
         class HandledCommand extends Command { };
         class stubEvent extends Event { test = "Test" };
         class mockAggregate extends Aggregate {
-            override commands : Command[] = [HandledCommand];
-            handleHandledCommand(c: HandledCommand) {}
+            override handlers: Map<Command, Function> = new Map([[HandledCommand, () => new stubEvent()]]);
         };
         let bddTest: BDDTest<mockAggregate>;
         beforeEach(() => {
@@ -110,7 +108,7 @@ describe('BBD Test', () => {
             let actionWithNonCommand = () => bddTest.When(unhandled);
 
             // then
-            expect(actionWithNonCommand()().next().value).toThrow(CommandHandlerNotDefined);
+            expect(actionWithNonCommand).toThrow(CommandHandlerNotDefined);
         });
     });
 
