@@ -29,7 +29,7 @@ export class OnlyActionWithCommands extends Error {
 
 export class CommandHandlerNotDefined extends Error {
   constructor(command: Command) {
-    super(`Command handler not defined for ${command.name}`);
+    super(`Command handler not defined for ${(command as any).name}`);
     // Set the prototype explicitly.
     Object.setPrototypeOf(this, CommandHandlerNotDefined.prototype);
     this.name = 'CommandHandlerNotDefined';
