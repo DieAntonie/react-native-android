@@ -2,7 +2,7 @@ import BDDTest from '../bdd-test'
 import Aggregate from '../aggregate'
 import Event from '../event'
 import Command from '../command'
-import { OnlyTestWithAggregate, OnlyPrepositionWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined } from "../exception"
+import { OnlyTestWithAggregate, OnlyProposeWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined, OnlyExpectEvents, OnlyReceiveEvents } from "../exception"
 
 describe('BBD Test', () => {
     describe('constructor', () => {
@@ -49,7 +49,7 @@ describe('BBD Test', () => {
             expect(givenEvents).toEqual([mockEvent1, mockEvent2]);
         });
 
-        it('should throw OnlyPrepositionWithEvents with non-Event subclass', () => {
+        it('should throw OnlyProposeWithEvents with non-Event subclass', () => {
             // given
             class mockClass { };
             class mockEvent extends Event { };
@@ -60,7 +60,7 @@ describe('BBD Test', () => {
             let prepositionWithNonEvent = () => bddTest.Given(mockEvent1, mockClass1);
 
             // then
-            expect(prepositionWithNonEvent).toThrow(OnlyPrepositionWithEvents);
+            expect(prepositionWithNonEvent).toThrow(OnlyProposeWithEvents);
         });
     });
 
@@ -105,10 +105,60 @@ describe('BBD Test', () => {
             let unhandled = new unhandledCommand();
 
             // when
-            let actionWithNonCommand = () => bddTest.When(unhandled);
+            let actionWithUnhandledCommand = () => bddTest.When(unhandled);
 
             // then
-            expect(actionWithNonCommand).toThrow(CommandHandlerNotDefined);
+            expect(actionWithUnhandledCommand).toThrow(CommandHandlerNotDefined);
+        });
+    });
+
+    describe('Then', () => {
+        class HandledCommand extends Command { };
+        class ExpectedEvent extends Event { };
+        class mockAggregate extends Aggregate {
+            override handlers: Map<Command, Function> = new Map([[HandledCommand, () => new ExpectedEvent()]]);
+        };
+        let bddTest: BDDTest<mockAggregate>;
+        beforeEach(() => {
+            bddTest = new BDDTest(mockAggregate);
+        });
+
+        it('should throw OnlyExpectEvents with non-Event subclass', () => {
+            // given
+            class mockClass { };
+            let mClass = new mockClass();
+
+            // when
+            let expectWithNonEvent = () => bddTest.Then(mClass);
+
+            // then
+            expect(expectWithNonEvent).toThrow(OnlyExpectEvents);
+        });
+
+        it('should return event handler with expected Event for produced Event', () => {
+            // given
+            let expectedEvent = new ExpectedEvent();
+            let receivedEvent = new ExpectedEvent();
+
+            // when
+            let expectedEventHandler = bddTest.Then(expectedEvent);
+
+            // then
+            expectedEventHandler(receivedEvent);
+        });
+
+        it('should throw OnlyReceiveEvents for produced Events', () => {
+            // given
+            let expectedEvent = new ExpectedEvent();
+            class mockClass { };
+            let mClass = new mockClass();
+            let eventHandler = bddTest.Then(expectedEvent);
+
+            // when
+            let handleReceivedNonEvent = () => eventHandler(mClass);
+
+            // then
+            expect(handleReceivedNonEvent).toThrow(OnlyReceiveEvents);
         });
     });
 

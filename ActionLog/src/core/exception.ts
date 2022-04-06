@@ -9,12 +9,30 @@ export class OnlyTestWithAggregate extends Error {
   }
 }
 
-export class OnlyPrepositionWithEvents extends Error {
+export class OnlyProposeWithEvents extends Error {
   constructor() {
-    super("Only pre-position with Event subclass");
+    super("Only declare propositions with Event subclass");
     // Set the prototype explicitly.
-    Object.setPrototypeOf(this, OnlyPrepositionWithEvents.prototype);
-    this.name = 'OnlyPrepositionWithEvents';
+    Object.setPrototypeOf(this, OnlyProposeWithEvents.prototype);
+    this.name = 'OnlyProposeWithEvents';
+  }
+}
+
+export class OnlyExpectEvents extends Error {
+  constructor() {
+    super("Only expect Event subclass");
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(this, OnlyExpectEvents.prototype);
+    this.name = 'OnlyExpectEvents';
+  }
+}
+
+export class OnlyReceiveEvents extends Error {
+  constructor() {
+    super("Only receive Event subclass");
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(this, OnlyReceiveEvents.prototype);
+    this.name = 'OnlyReceiveEvents';
   }
 }
 

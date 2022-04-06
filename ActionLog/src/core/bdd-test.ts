@@ -1,7 +1,7 @@
 import Aggregate from "./aggregate";
 import Command from "./command";
 import Event from "./event";
-import { OnlyTestWithAggregate, OnlyPrepositionWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined } from "./exception"
+import { OnlyTestWithAggregate, OnlyProposeWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined, OnlyExpectEvents, OnlyReceiveEvents } from "./exception"
 
 class BDDTest<TAggregate extends Aggregate> {
 
@@ -15,11 +15,11 @@ class BDDTest<TAggregate extends Aggregate> {
         this._aggregate = agg;
     }
 
-    Given(...events: Event[]): Event[] {
-        if (events.some(e => !(e instanceof Event))) {
-            throw new OnlyPrepositionWithEvents();
+    Given(...proposedEvents: Event[]): Event[] {
+        if (proposedEvents.some(e => !(e instanceof Event))) {
+            throw new OnlyProposeWithEvents();
         }
-        return events;
+        return proposedEvents;
     }
 
     When(command: Command): () => Generator<Event, void, unknown> {
@@ -37,6 +37,20 @@ class BDDTest<TAggregate extends Aggregate> {
             }
         }
         return commandHandler;
+    }
+
+    Then(...expectedEvents: Event[]) {
+        if (expectedEvents.some(e => !(e instanceof Event))) {
+            throw new OnlyExpectEvents();
+        }
+        let eventHandler = (...receivedEvents: Event[]) => {
+            if (receivedEvents.some(e => !(e instanceof Event))) {
+                throw new OnlyReceiveEvents();
+            }
+            
+            expect(receivedEvents).toEqual(expectedEvents);
+        }
+        return eventHandler;
     }
 }
 
