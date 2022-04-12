@@ -1,11 +1,14 @@
 import Aggregate from "./aggregate";
 import Command from "./command";
 import Event from "./event";
-import { OnlyTestWithAggregate, OnlyProposeWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined, OnlyExpectEvents, OnlyReceiveEvents } from "./exception"
+import { OnlyTestWithAggregate, OnlyProposeWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined, OnlyExpectEvents, OnlyReceiveEvents, UnexpectedEventsReceived, ExpectedEventsNotReceived } from "./exception"
+
+let doesNotInclude = (referenceEvents: Event[], event: Event): boolean =>
+    !referenceEvents.map(reference => reference.constructor).includes(event.constructor);
 
 class BDDTest<TAggregate extends Aggregate> {
 
-    private _aggregate : TAggregate;
+    private _aggregate: TAggregate;
 
     constructor(aggregate: new () => TAggregate) {
         let agg = new aggregate();
@@ -43,12 +46,26 @@ class BDDTest<TAggregate extends Aggregate> {
         if (expectedEvents.some(e => !(e instanceof Event))) {
             throw new OnlyExpectEvents();
         }
+        let notExpected = (event: Event, index: number, array: Event[]): boolean =>
+            doesNotInclude(expectedEvents, event);
         let eventHandler = (...receivedEvents: Event[]) => {
             if (receivedEvents.some(e => !(e instanceof Event))) {
                 throw new OnlyReceiveEvents();
             }
-            
-            expect(receivedEvents).toEqual(expectedEvents);
+            if (receivedEvents.some(notExpected)) {
+                throw new UnexpectedEventsReceived(...receivedEvents.filter(notExpected));
+            }
+            let notReceived = (event: Event, index: number, array: Event[]): boolean =>
+                doesNotInclude(receivedEvents, event);
+            if (expectedEvents.some(notReceived)) {
+                throw new ExpectedEventsNotReceived(...receivedEvents.filter(notReceived));
+            }
+            receivedEvents.forEach(received =>
+                expectedEvents.forEach(expected => {
+                    if (received.constructor == expected.constructor)
+                        expect(received).toEqual(expected)
+                })
+            );
         }
         return eventHandler;
     }

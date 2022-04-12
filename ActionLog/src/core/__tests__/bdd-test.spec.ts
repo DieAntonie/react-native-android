@@ -2,7 +2,7 @@ import BDDTest from '../bdd-test'
 import Aggregate from '../aggregate'
 import Event from '../event'
 import Command from '../command'
-import { OnlyTestWithAggregate, OnlyProposeWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined, OnlyExpectEvents, OnlyReceiveEvents } from "../exception"
+import { OnlyTestWithAggregate, OnlyProposeWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined, OnlyExpectEvents, OnlyReceiveEvents, UnexpectedEventsReceived, ExpectedEventsNotReceived } from "../exception"
 
 describe('BBD Test', () => {
     describe('constructor', () => {
@@ -141,7 +141,7 @@ describe('BBD Test', () => {
             let receivedEvent = new ExpectedEvent();
 
             // when
-            let expectedEventHandler = bddTest.Then(expectedEvent);
+            let expectedEventHandler = bddTest.Then(...[expectedEvent]);
 
             // then
             expectedEventHandler(receivedEvent);
@@ -155,10 +155,52 @@ describe('BBD Test', () => {
             let eventHandler = bddTest.Then(expectedEvent);
 
             // when
-            let handleReceivedNonEvent = () => eventHandler(mClass);
+            let handleReceivedNonEvent = () => eventHandler(...[mClass]);
 
             // then
             expect(handleReceivedNonEvent).toThrow(OnlyReceiveEvents);
+        });
+
+        it('should throw ExpectedEventsNotReceived for produced Events', () => {
+            // given
+            let expectedEvent = new ExpectedEvent();
+            class UnexpectedEvent extends Event { };
+            let unexpectedEvent = new UnexpectedEvent();
+            let eventHandler = bddTest.Then(expectedEvent, unexpectedEvent);
+
+            // when
+            let handleReceivedNonEvent = () => eventHandler(expectedEvent);
+
+            // then
+            expect(handleReceivedNonEvent).toThrow(ExpectedEventsNotReceived);
+        });
+
+        it('should throw UnexpectedEventsReceived for produced Events', () => {
+            // given
+            let expectedEvent = new ExpectedEvent();
+            class UnexpectedEvent extends Event { };
+            let unexpectedEvent = new UnexpectedEvent();
+            let eventHandler = bddTest.Then(expectedEvent);
+
+            // when
+            let handleReceivedNonEvent = () => eventHandler(unexpectedEvent, expectedEvent);
+
+            // then
+            expect(handleReceivedNonEvent).toThrow(UnexpectedEventsReceived);
+        });
+
+        it('should throw fail assert for differing Events', () => {
+            // given
+            class MockEvent extends Event { mockProp = 'mockValue' };
+            let expectedEvent = new MockEvent();
+            let eventHandler = bddTest.Then(expectedEvent);
+
+            // when
+            let receivedEvent = new MockEvent();
+            receivedEvent.mockProp = 'wrong';
+
+            // then
+            eventHandler(receivedEvent);
         });
     });
 

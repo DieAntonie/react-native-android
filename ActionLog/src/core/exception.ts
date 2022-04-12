@@ -36,6 +36,24 @@ export class OnlyReceiveEvents extends Error {
   }
 }
 
+export class UnexpectedEventsReceived extends Error {
+  constructor(...events: Event[]) {
+    super(`Unexpected events [${events.map(event => event.constructor.name).join(', ')}] received`);
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(this, UnexpectedEventsReceived.prototype);
+    this.name = 'UnexpectedEventsReceived';
+  }
+}
+
+export class ExpectedEventsNotReceived extends Error {
+  constructor(...events: Event[]) {
+    super(`Expected events [${events.map(event => event.constructor.name).join(', ')}] not received`);
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(this, ExpectedEventsNotReceived.prototype);
+    this.name = 'ExpectedEventsNotReceived';
+  }
+}
+
 export class OnlyActionWithCommands extends Error {
   constructor() {
     super("Only action with Command subclass");
