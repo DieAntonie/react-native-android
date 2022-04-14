@@ -2,7 +2,17 @@ import BDDTest from '../bdd-test'
 import Aggregate from '../aggregate'
 import Event from '../event'
 import Command from '../command'
-import { OnlyTestWithAggregate, OnlyProposeWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined, OnlyExpectEvents, OnlyReceiveEvents, UnexpectedEventsReceived, ExpectedEventsNotReceived } from "../exception"
+import {
+    OnlyTestWithAggregate,
+    OnlyProposeWithEvents,
+    OnlyActionWithCommands,
+    CommandHandlerNotDefined,
+    OnlyExpectEvents,
+    OnlyReceiveEvents,
+    UnexpectedEventsReceived,
+    ExpectedEventsNotReceived,
+    OnlyExpectErrors
+} from "../exception"
 
 describe('BBD Test', () => {
     describe('constructor', () => {
@@ -123,18 +133,6 @@ describe('BBD Test', () => {
             bddTest = new BDDTest(mockAggregate);
         });
 
-        it('should throw OnlyExpectEvents with non-Event subclass', () => {
-            // given
-            class mockClass { };
-            let mClass = new mockClass();
-
-            // when
-            let expectWithNonEvent = () => bddTest.Then(mClass);
-
-            // then
-            expect(expectWithNonEvent).toThrow(OnlyExpectEvents);
-        });
-
         it('should return event handler with expected Event for produced Event', () => {
             // given
             let expectedEvent = new ExpectedEvent();
@@ -145,6 +143,18 @@ describe('BBD Test', () => {
 
             // then
             expectedEventHandler(receivedEvent);
+        });
+
+        it('should throw OnlyExpectEvents with non-Event subclass', () => {
+            // given
+            class mockClass { };
+            let mClass = new mockClass();
+
+            // when
+            let expectWithNonEvent = () => bddTest.Then(mClass);
+
+            // then
+            expect(expectWithNonEvent).toThrow(OnlyExpectEvents);
         });
 
         it('should throw OnlyReceiveEvents for produced Events', () => {
@@ -189,72 +199,64 @@ describe('BBD Test', () => {
             expect(handleReceivedNonEvent).toThrow(UnexpectedEventsReceived);
         });
 
-        it('should throw fail assert for differing Events', () => {
-            // given
-            class MockEvent extends Event { mockProp = 'mockValue' };
-            let expectedEvent = new MockEvent();
-            let eventHandler = bddTest.Then(expectedEvent);
+        // it('should throw fail assert for differing Events', () => {
+        //     // given
+        //     class MockEvent extends Event { mockProp = 'mockValue' };
+        //     let expectedEvent = new MockEvent();
+        //     let eventHandler = bddTest.Then(expectedEvent);
 
-            // when
-            let receivedEvent = new MockEvent();
-            receivedEvent.mockProp = 'wrong';
+        //     // when
+        //     let receivedEvent = new MockEvent();
+        //     receivedEvent.mockProp = 'wrong';
 
-            // then
-            eventHandler(receivedEvent);
-        });
+        //     // then
+        //     eventHandler(receivedEvent);
+        // });
     });
 
-    // describe('Create method', () => {
-    //     it('should create and return an object of ingredient details', async () => {
-    //         const payload = {
-    //             name: 'Pasta',
-    //             slug: 'pasta',
-    //             description: 'abcd make some pasta'
-    //         }
+    describe('ThenFailWith', () => {
+        class HandledCommand extends Command { };
+        class ExpectedEvent extends Event { };
+        class ExpectedException extends Error { };
+        class mockAggregate extends Aggregate {
+            override handlers: Map<Command, Function> = new Map([[HandledCommand, () => new ExpectedEvent()]]);
+        };
+        let bddTest: BDDTest<mockAggregate>;
+        beforeEach(() => {
+            bddTest = new BDDTest(mockAggregate);
+        });
 
-    //         const ingredient = await ingredientDal.create(payload)
-    //         expect(ingredient).not.toBeNull()
-    //     })
-    // })
+        it('should return event handler with expected Event for produced Event', () => {
+            // given
+            let expectedException = new ExpectedException();
 
-    // describe('findOrCreate method', () => {
-    //     beforeAll(async () => {
-    //         await Ingredient.create({
-    //             name: 'Brown Rice',
-    //             slug: 'brown-rice'
-    //         })
-    //     })
-    //     it('should create a new entry when none with matching name exists', async () => {
-    //         const payload = {
-    //             name: 'Rice',
-    //             slug: 'rice',
-    //         }
-    //         await ingredientDal.findOrCreate(payload)
-    //         const ingredientsFound = await Ingredient.findAll({where: {name: 'Rice'}})
-    //         expect(ingredientsFound.length).toEqual(1)
-    //     })
-    //     it('should return an existing entry where one with same name exists without updating it', async () => {
-    //         const payload = {
-    //             name: 'Brown Rice',
-    //             slug: 'brownrice',
-    //             description: 'test'
-    //         }
-    //         await ingredientDal.findOrCreate(payload)
-    //         const ingredientsFound = await Ingredient.findAll({where: {name: 'Brown Rice'}})
+            // when
+            let expectedEventHandler = bddTest.ThenFailWith(ExpectedException);
 
-    //         expect(ingredientsFound.length).toEqual(1)
-    //         expect(ingredientsFound[0].slug).toEqual('brown-rice')
-    //         expect(ingredientsFound[0].description).toBeNull()
-    //     })
-    // })
+            // then
+            expectedEventHandler(...[expectedException]);
+        });
 
-    // describe('Update method', () => {
-    //     it('should update a specific existing Ingredient entry', async () => {
-    //         await ingredientDal.update(ingredientId, {
-    //             description: 'A legume'
-    //         })
-    //         const ingredient = await Ingredient.findByPk(ingredientId)
-    //         expect(ingredient?.description).toEqual('A legume')
-    //     })
-    // })
+        it('should throw OnlyExpectErrors with non-Error subclass', () => {
+            // given
+            class mockClass { };
+
+            // when
+            let expectWithNonEvent = () => bddTest.ThenFailWith(mockClass);
+
+            // then
+            expect(expectWithNonEvent).toThrow(OnlyExpectErrors);
+        });
+
+        it('should throw OnlyExpectErrors with non-Error subclass', () => {
+            // given
+            class mockClass { };
+
+            // when
+            let expectWithNonEvent = () => bddTest.ThenFailWith(mockClass);
+
+            // then
+            expect(expectWithNonEvent).toThrow(OnlyExpectErrors);
+        });
+    });
 })

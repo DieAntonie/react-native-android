@@ -1,5 +1,8 @@
 import Command from "./command";
 
+let toString = (events: Event[]) =>
+  events.map(event => event.constructor.name).join(', ');
+
 export class OnlyTestWithAggregate extends Error {
   constructor() {
     super("Only test with Aggregate subclass");
@@ -36,9 +39,19 @@ export class OnlyReceiveEvents extends Error {
   }
 }
 
+export class OnlyExpectErrors extends Error {
+  constructor() {
+    super("Only expect Error subclass exceptions");
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(this, OnlyExpectErrors.prototype);
+    this.name = 'OnlyExpectErrors';
+  }
+}
+
 export class UnexpectedEventsReceived extends Error {
   constructor(...events: Event[]) {
-    super(`Unexpected events [${events.map(event => event.constructor.name).join(', ')}] received`);
+    const eventList = toString(events);
+    super(`Unexpected events [${eventList}] received`);
     // Set the prototype explicitly.
     Object.setPrototypeOf(this, UnexpectedEventsReceived.prototype);
     this.name = 'UnexpectedEventsReceived';
@@ -47,7 +60,8 @@ export class UnexpectedEventsReceived extends Error {
 
 export class ExpectedEventsNotReceived extends Error {
   constructor(...events: Event[]) {
-    super(`Expected events [${events.map(event => event.constructor.name).join(', ')}] not received`);
+    const eventList = toString(events);
+    super(`Expected events [${eventList}] not received`);
     // Set the prototype explicitly.
     Object.setPrototypeOf(this, ExpectedEventsNotReceived.prototype);
     this.name = 'ExpectedEventsNotReceived';

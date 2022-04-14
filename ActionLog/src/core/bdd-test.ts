@@ -1,7 +1,17 @@
 import Aggregate from "./aggregate";
 import Command from "./command";
 import Event from "./event";
-import { OnlyTestWithAggregate, OnlyProposeWithEvents, OnlyActionWithCommands, CommandHandlerNotDefined, OnlyExpectEvents, OnlyReceiveEvents, UnexpectedEventsReceived, ExpectedEventsNotReceived } from "./exception"
+import {
+    OnlyTestWithAggregate,
+    OnlyProposeWithEvents,
+    OnlyActionWithCommands,
+    CommandHandlerNotDefined,
+    OnlyExpectEvents,
+    OnlyReceiveEvents,
+    UnexpectedEventsReceived,
+    ExpectedEventsNotReceived,
+    OnlyExpectErrors
+} from "./exception"
 
 let doesNotInclude = (referenceEvents: Event[], event: Event): boolean =>
     !referenceEvents.map(reference => reference.constructor).includes(event.constructor);
@@ -46,7 +56,7 @@ class BDDTest<TAggregate extends Aggregate> {
         if (expectedEvents.some(e => !(e instanceof Event))) {
             throw new OnlyExpectEvents();
         }
-        let notExpected = (event: Event, index: number, array: Event[]): boolean =>
+        let notExpected = (event: Event): boolean =>
             doesNotInclude(expectedEvents, event);
         let eventHandler = (...receivedEvents: Event[]) => {
             if (receivedEvents.some(e => !(e instanceof Event))) {
@@ -55,7 +65,7 @@ class BDDTest<TAggregate extends Aggregate> {
             if (receivedEvents.some(notExpected)) {
                 throw new UnexpectedEventsReceived(...receivedEvents.filter(notExpected));
             }
-            let notReceived = (event: Event, index: number, array: Event[]): boolean =>
+            let notReceived = (event: Event): boolean =>
                 doesNotInclude(receivedEvents, event);
             if (expectedEvents.some(notReceived)) {
                 throw new ExpectedEventsNotReceived(...receivedEvents.filter(notReceived));
@@ -66,6 +76,17 @@ class BDDTest<TAggregate extends Aggregate> {
                         expect(received).toEqual(expected)
                 })
             );
+        }
+        return eventHandler;
+    }
+
+    ThenFailWith<TException>(exception: new () => TException) {
+        let except = new exception();
+        if (!(except instanceof Error)) {
+            throw new OnlyExpectErrors();
+        }
+        let eventHandler = (...receivedEvents: Event[]) => {
+            expect(receivedEvents[0].constructor).toEqual(exception)
         }
         return eventHandler;
     }
